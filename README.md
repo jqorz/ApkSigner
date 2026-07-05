@@ -25,9 +25,6 @@
 ```bash
 # 标准运行
 ./gradlew :desktopApp:run
-
-# 热重载运行
-./gradlew :desktopApp:hotRun --auto
 ```
 
 ### 使用 IDE

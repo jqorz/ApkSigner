@@ -15,6 +15,7 @@ import androidx.compose.ui.window.Dialog
 fun SettingsDialog(
     apksignerPath: String?,
     androidSdkPath: String?,
+    detectMessage: String?,
     onDismiss: () -> Unit,
     onSelectApkSigner: () -> Unit,
     onSelectSdkPath: () -> Unit,
@@ -23,6 +24,14 @@ fun SettingsDialog(
 ) {
     var editedApkSignerPath by remember { mutableStateOf(apksignerPath ?: "") }
     var editedSdkPath by remember { mutableStateOf(androidSdkPath ?: "") }
+
+    // 同步ViewModel状态变化（自动检测、浏览选择后）
+    LaunchedEffect(apksignerPath) {
+        editedApkSignerPath = apksignerPath ?: ""
+    }
+    LaunchedEffect(androidSdkPath) {
+        editedSdkPath = androidSdkPath ?: ""
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -117,6 +126,33 @@ fun SettingsDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("自动检测")
+                }
+
+                // 检测结果提示
+                if (detectMessage != null) {
+                    val isSuccess = detectMessage.startsWith("✓")
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSuccess) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.errorContainer
+                            }
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = detectMessage,
+                            modifier = Modifier.padding(12.dp),
+                            fontSize = 13.sp,
+                            color = if (isSuccess) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            }
+                        )
+                    }
                 }
 
                 HorizontalDivider()

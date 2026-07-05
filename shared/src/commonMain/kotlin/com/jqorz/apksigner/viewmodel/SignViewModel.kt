@@ -55,6 +55,10 @@ class SignViewModel : ViewModel() {
     private val _apksignerPath = MutableStateFlow<String?>(null)
     val apksignerPath: StateFlow<String?> = _apksignerPath.asStateFlow()
 
+    // 自动检测结果提示
+    private val _detectMessage = MutableStateFlow<String?>(null)
+    val detectMessage: StateFlow<String?> = _detectMessage.asStateFlow()
+
     // 密钥表单状态
     private val _showKeyForm = MutableStateFlow(false)
     val showKeyForm: StateFlow<Boolean> = _showKeyForm.asStateFlow()
@@ -93,7 +97,7 @@ class SignViewModel : ViewModel() {
     init {
         loadSettings()
         loadSavedKeys()
-        detectApkSigner()
+        applyApkSignerPath()
     }
 
     private fun loadSettings() {
@@ -104,15 +108,14 @@ class SignViewModel : ViewModel() {
         _savedKeys.value = keyStoreStorage.getAllKeyStores()
     }
 
-    private fun detectApkSigner() {
+    /** 从设置中读取apksigner路径，不做自动检测 */
+    private fun applyApkSignerPath() {
         val currentSettings = _settings.value
-        // 优先使用手动配置的路径
         if (!currentSettings.apksignerPath.isNullOrBlank()) {
             _apksignerPath.value = currentSettings.apksignerPath
-            return
+        } else {
+            _apksignerPath.value = null
         }
-        // 否则自动检测
-        _apksignerPath.value = apkSignerTool.detectApkSigner()
     }
 
     // 设置相关
@@ -149,16 +152,35 @@ class SignViewModel : ViewModel() {
         settingsStorage.save(newSettings)
         _settings.value = newSettings
         _showSettings.value = false
-        // 重新检测apksigner
-        detectApkSigner()
+        // 重新应用apksigner路径
+        applyApkSignerPath()
     }
 
     fun autoDetectApkSigner() {
-        _apksignerPath.value = apkSignerTool.detectApkSigner()
-        // 清空手动配置，使用自动检测结果
+        val detected = apkSignerTool.detectApkSigner()
+        _apksignerPath.value = detected
         val currentSettings = _settings.value
-        _settings.value = currentSettings.copy(apksignerPath = null)
+        // 优先从环境变量获取SDK路径
+        var sdkPath: String? = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+        // 如果环境变量没有，从apksigner路径反推: .../Sdk/build-tools/xx.x.x/apksigner.bat -> .../Sdk
+        if (sdkPath == null && detected != null) {
+            val apksignerFile = java.io.File(detected)
+            val versionDir = apksignerFile.parentFile
+            val buildToolsDir = versionDir?.parentFile
+            sdkPath = buildToolsDir?.parentFile?.absolutePath
+        }
+        _settings.value = currentSettings.copy(apksignerPath = detected, androidSdkPath = sdkPath)
         settingsStorage.save(_settings.value)
+        // 设置检测结果提示
+        _detectMessage.value = if (detected != null) {
+            "✓ 检测成功: $detected"
+        } else {
+            "✗ 未找到apksigner，请检查ANDROID_HOME环境变量或手动设置SDK路径"
+        }
+    }
+
+    fun clearDetectMessage() {
+        _detectMessage.value = null
     }
 
     fun selectApk() {
@@ -357,7 +379,7 @@ class SignViewModel : ViewModel() {
     }
 
     fun refreshApkSigner() {
-        detectApkSigner()
+        applyApkSignerPath()
     }
 
     private fun resetForm() {

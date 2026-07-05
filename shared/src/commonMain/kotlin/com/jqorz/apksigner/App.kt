@@ -64,6 +64,7 @@ fun App() {
     val viewModel: SignViewModel = viewModel { SignViewModel() }
     val showSettings by viewModel.showSettings.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val detectMessage by viewModel.detectMessage.collectAsState()
 
     MaterialTheme(
         colorScheme = appColorScheme()
@@ -118,7 +119,11 @@ fun App() {
                 SettingsDialog(
                     apksignerPath = settings.apksignerPath,
                     androidSdkPath = settings.androidSdkPath,
-                    onDismiss = { viewModel.hideSettingsDialog() },
+                    detectMessage = detectMessage,
+                    onDismiss = {
+                        viewModel.clearDetectMessage()
+                        viewModel.hideSettingsDialog()
+                    },
                     onSelectApkSigner = { viewModel.selectApkSignerFile() },
                     onSelectSdkPath = { viewModel.selectAndroidSdkPath() },
                     onAutoDetect = { viewModel.autoDetectApkSigner() },
@@ -471,7 +476,7 @@ private fun SignConfigPanel(
                 )
                 ApkSignerStatusChip(
                     apksignerPath = apksignerPath,
-                    onRefresh = { viewModel.refreshApkSigner() }
+                    onGoSettings = { viewModel.showSettingsDialog() }
                 )
             }
 
@@ -619,7 +624,7 @@ private fun SignSchemeSection(
 @Composable
 private fun ApkSignerStatusChip(
     apksignerPath: String?,
-    onRefresh: () -> Unit
+    onGoSettings: () -> Unit
 ) {
     val containerColor = if (apksignerPath != null) {
         MaterialTheme.colorScheme.tertiaryContainer
@@ -633,7 +638,7 @@ private fun ApkSignerStatusChip(
     }
 
     Surface(
-        onClick = onRefresh,
+        onClick = if (apksignerPath == null) onGoSettings else ({}),
         shape = RoundedCornerShape(16.dp),
         color = containerColor
     ) {
@@ -642,16 +647,24 @@ private fun ApkSignerStatusChip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = if (apksignerPath != null) "✓ apksigner" else "✗ 未找到",
-                color = contentColor,
-                fontSize = 12.sp
-            )
-            Text(
-                text = "刷新",
-                color = contentColor,
-                fontSize = 11.sp
-            )
+            if (apksignerPath != null) {
+                Text(
+                    text = "✓ apksigner",
+                    color = contentColor,
+                    fontSize = 12.sp
+                )
+            } else {
+                Text(
+                    text = "✗ 未配置",
+                    color = contentColor,
+                    fontSize = 12.sp
+                )
+                Text(
+                    text = "去设置",
+                    color = contentColor,
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
