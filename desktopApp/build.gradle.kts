@@ -21,8 +21,26 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.jqorz.apksigner"
+            packageName = "ApkSigner"
             packageVersion = "1.0.0"
+
+            // Windows ICO 图标
+            windows {
+                iconFile.set(project.file("src/main/resources/app_icon.ico"))
+                menuGroup = "AndDevHelper"
+                shortcut = true
+                dirChooser = true
+            }
+
+            // macOS 图标 (可选，使用 PNG)
+            macOS {
+                iconFile.set(project.file("src/main/resources/app_icon.png"))
+            }
+
+            // Linux 图标 (可选)
+            linux {
+                iconFile.set(project.file("src/main/resources/app_icon.png"))
+            }
         }
     }
 }
