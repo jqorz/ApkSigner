@@ -27,10 +27,13 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb)
             packageName = "ApkSigner"
-            packageVersion = "1.0.0"
+            // 注意: 每次发新版本必须递增此版本号, 否则MSI会因"同版本禁止覆盖安装"导致安装exe闪退
+            packageVersion = "1.0.1"
 
             // Windows ICO 图标
             windows {
+                // 升级标识UUID, 固定不变, 用于让新版本安装包能识别并覆盖旧版本
+                upgradeUuid = "3de1d7f7-fc58-4493-ae65-4c3cffd351b9"
                 iconFile.set(project.file("src/main/resources/app_icon.ico"))
                 menuGroup = "ApkSigner"
                 shortcut = true
