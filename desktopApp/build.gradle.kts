@@ -1,4 +1,6 @@
+import org.gradle.declarative.dsl.schema.FqName.Empty.packageName
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.reload.core.Environment.Companion.application
 
 plugins {
     alias(libs.plugins.kotlinJvm)
@@ -20,14 +22,14 @@ compose.desktop {
         mainClass = "com.jqorz.apksigner.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb)
             packageName = "ApkSigner"
             packageVersion = "1.0.0"
 
             // Windows ICO 图标
             windows {
                 iconFile.set(project.file("src/main/resources/app_icon.ico"))
-                menuGroup = "AndDevHelper"
+                menuGroup = "ApkSigner"
                 shortcut = true
                 dirChooser = true
             }
