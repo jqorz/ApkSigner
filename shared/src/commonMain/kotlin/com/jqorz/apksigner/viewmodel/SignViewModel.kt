@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 
 class SignViewModel : ViewModel() {
@@ -43,8 +44,8 @@ class SignViewModel : ViewModel() {
     private val _savedKeys = MutableStateFlow<List<KeyStoreInfo>>(emptyList())
     val savedKeys: StateFlow<List<KeyStoreInfo>> = _savedKeys.asStateFlow()
 
-    // 签名方案
-    private val _signSchemes = MutableStateFlow(setOf(SignScheme.V1, SignScheme.V2, SignScheme.V3))
+    // 签名方案（默认勾选V1、V2）
+    private val _signSchemes = MutableStateFlow(setOf(SignScheme.V1, SignScheme.V2))
     val signSchemes: StateFlow<Set<SignScheme>> = _signSchemes.asStateFlow()
 
     // 签名状态
@@ -102,6 +103,11 @@ class SignViewModel : ViewModel() {
 
     private fun loadSettings() {
         _settings.value = settingsStorage.load()
+        // 恢复上一次使用的APK路径
+        val lastApkPath = _settings.value.lastApkPath
+        if (lastApkPath != null && File(lastApkPath).isFile) {
+            _apkPath.value = lastApkPath
+        }
     }
 
     private fun loadSavedKeys() {
@@ -184,9 +190,14 @@ class SignViewModel : ViewModel() {
     }
 
     fun selectApk() {
-        val path = filePicker.selectApkFile()
+        // 打开文件对话框时定位到上次选择的APK所在目录
+        val currentPath = _apkPath.value.takeIf { it.isNotBlank() }
+        val path = filePicker.selectApkFile(currentPath)
         if (path != null) {
             _apkPath.value = path
+            // 记住本次选择的APK路径
+            _settings.value = _settings.value.copy(lastApkPath = path)
+            settingsStorage.save(_settings.value)
         }
     }
 
@@ -376,6 +387,15 @@ class SignViewModel : ViewModel() {
 
     fun resetSigningState() {
         _signingState.value = SigningState.Idle
+    }
+
+    /** 打开签名输出文件所在的目录 */
+    fun openOutputDirectory() {
+        val outputPath = (_signingState.value as? SigningState.Success)?.outputPath
+        val target = outputPath?.takeIf { it.isNotBlank() } ?: _apkPath.value
+        if (target.isNotBlank()) {
+            openInFileExplorer(target)
+        }
     }
 
     fun refreshApkSigner() {

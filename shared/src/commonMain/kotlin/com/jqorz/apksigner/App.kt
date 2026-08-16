@@ -502,7 +502,8 @@ private fun SignConfigPanel(
                 signingState = signingState,
                 canSign = apkPath.isNotBlank() && selectedKey != null && !apksignerPath.isNullOrBlank(),
                 onSign = { viewModel.startSigning() },
-                onReset = { viewModel.resetSigningState() }
+                onReset = { viewModel.resetSigningState() },
+                onOpenDirectory = { viewModel.openOutputDirectory() }
             )
         }
     }
@@ -674,7 +675,8 @@ private fun SignActionSection(
     signingState: SigningState,
     canSign: Boolean,
     onSign: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    onOpenDirectory: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -716,25 +718,38 @@ private fun SignActionSection(
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    SelectionContainer(
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp)
+                        SelectionContainer(
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Text(
-                                "✓ 签名成功!",
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1B5E20)
+                            Column {
+                                Text(
+                                    "✓ 签名成功!",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1B5E20)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "输出: ${signingState.outputPath}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF2E7D32)
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = onOpenDirectory,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AppGreen,
+                                contentColor = Color.White
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "输出: ${signingState.outputPath}",
-                                fontSize = 12.sp,
-                                color = Color(0xFF2E7D32)
-                            )
+                        ) {
+                            Text("📂 打开目录")
                         }
                     }
                 }

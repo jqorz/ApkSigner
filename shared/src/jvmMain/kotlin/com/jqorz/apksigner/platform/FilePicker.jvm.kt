@@ -1,15 +1,17 @@
 package com.jqorz.apksigner.platform
 
+import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 
 class JVMFilePicker : FilePicker {
 
-    override fun selectApkFile(): String? {
+    override fun selectApkFile(initialDirectory: String?): String? {
         return openFileDialog(
             title = "选择APK文件",
             extensions = listOf("apk"),
-            description = "APK文件"
+            description = "APK文件",
+            initialDirectory = initialDirectory
         )
     }
 
@@ -44,7 +46,8 @@ class JVMFilePicker : FilePicker {
     private fun openFileDialog(
         title: String,
         extensions: List<String>,
-        description: String
+        description: String,
+        initialDirectory: String? = null
     ): String? {
         val chooser = JFileChooser().apply {
             fileSelectionMode = JFileChooser.FILES_ONLY
@@ -54,6 +57,13 @@ class JVMFilePicker : FilePicker {
                 *extArray
             )
             dialogTitle = title
+            // 定位到初始目录（若传入的是文件路径则定位到其所在目录）
+            if (initialDirectory != null) {
+                val dir = File(initialDirectory).let { if (it.isFile) it.parentFile else it }
+                if (dir != null && dir.isDirectory) {
+                    currentDirectory = dir
+                }
+            }
         }
         return if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             chooser.selectedFile.absolutePath
