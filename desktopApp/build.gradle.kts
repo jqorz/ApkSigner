@@ -13,13 +13,16 @@ dependencies {
 
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
-
-    implementation(libs.compose.uiToolingPreview)
 }
 
 compose.desktop {
     application {
         mainClass = "com.jqorz.apksigner.MainKt"
+
+        // Release 构建启用 ProGuard 裁剪/混淆，显著缩小安装包
+        buildTypes.release.proguard {
+            configurationFiles.from("rules.pro")
+        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb)
